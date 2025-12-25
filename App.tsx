@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
-import { BookOpen, Search, Shield, Activity, Terminal, AlertTriangle, Cpu, HardDrive, Menu, X, ChevronRight, Eye, Layers, Lock, Zap, BrainCircuit, Globe, Code, ArrowRight, Ghost, Monitor, Keyboard, Database, FileCode, Settings, ShieldCheck, CheckCircle, Info, Trash2, ShieldAlert, Binary, Fingerprint, Waves } from 'lucide-react';
-import { ARTIFACTS, TOOLS, SCENARIOS, MOD_COMPONENTS } from './data';
-import { Artifact, ArtifactCategory, DetectionTool, SimulationScenario, ModComponent } from './types';
 
-// --- Components ---
+import React, { useState, useMemo } from 'react';
+import { 
+  BookOpen, Search, Shield, Activity, Terminal, AlertTriangle, 
+  Cpu, HardDrive, Menu, X, ChevronRight, Eye, Layers, Lock, 
+  Zap, BrainCircuit, Globe, Code, ArrowRight, Ghost, Monitor, 
+  Fingerprint, Book, Database, FileCode, Settings, ShieldCheck, 
+  CheckCircle, Info, Trash2, Binary, Waves, Filter, ShieldAlert,
+  Target, Crosshair, Brackets, TerminalSquare, InfoIcon
+} from 'lucide-react';
+// Add GoogleGenAI import
+import { GoogleGenAI } from "@google/genai";
+import { ARTIFACTS, TOOLS, SCENARIOS, MOD_COMPONENTS, HANDBOOK_CONTENT } from './data';
+import { Artifact, ArtifactCategory, DetectionTool, SimulationScenario, ModComponent, HandbookSection } from './types';
+
+// --- Sub-Components ---
 
 const SidebarItem = ({ 
   icon: Icon, 
@@ -20,7 +30,7 @@ const SidebarItem = ({
     onClick={onClick}
     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
       active 
-        ? 'bg-lotus-900/50 text-lotus-400 border-l-4 border-lotus-500' 
+        ? 'bg-lotus-900/50 text-lotus-400 border-l-4 border-lotus-500 shadow-lg' 
         : 'text-slate-400 hover:bg-dark-800 hover:text-lotus-200'
     }`}
   >
@@ -31,235 +41,57 @@ const SidebarItem = ({
 
 const SectionTitle = ({ title, subtitle }: { title: string, subtitle?: string }) => (
   <div className="mb-8 border-b border-dark-700 pb-4">
-    <h2 className="text-3xl font-bold text-white mb-2">{title}</h2>
-    {subtitle && <p className="text-slate-400">{subtitle}</p>}
+    <h2 className="text-3xl font-bold text-white mb-2 uppercase tracking-tighter">{title}</h2>
+    {subtitle && <p className="text-slate-400 text-sm">{subtitle}</p>}
   </div>
 );
 
-const ArtifactCard: React.FC<{ artifact: Artifact }> = ({ artifact }) => (
-  <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 hover:border-lotus-900 transition-colors">
-    <div className="flex justify-between items-start mb-4">
-      <div className="flex items-center space-x-2">
-        <HardDrive className="text-lotus-500" size={20} />
-        <h3 className="text-xl font-bold text-lotus-100">{artifact.name}</h3>
-      </div>
-      <span className="text-xs font-mono bg-dark-900 text-slate-400 px-2 py-1 rounded">
-        {artifact.category}
-      </span>
-    </div>
-    <p className="text-slate-300 mb-4 text-sm leading-relaxed">{artifact.description}</p>
-    
-    <div className="space-y-3">
-      <div className="bg-dark-900/50 p-3 rounded-lg">
-        <span className="text-xs uppercase tracking-wider text-lotus-400 font-bold block mb-1">Detection Method</span>
-        <p className="text-sm text-slate-300">{artifact.detectionMethod}</p>
-      </div>
-      
-      <div className="bg-dark-900/50 p-3 rounded-lg border-l-2 border-lotus-600">
-        <span className="text-xs uppercase tracking-wider text-lotus-400 font-bold block mb-1">Red Lotus Note</span>
-        <p className="text-sm text-slate-300 italic">"{artifact.redLotusNotes}"</p>
-      </div>
+// --- View Components ---
 
-      <div className="flex flex-wrap gap-2 mt-2">
-        {artifact.toolsUsed.map(tool => (
-          <span key={tool} className="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded border border-slate-700">
-            {tool}
-          </span>
-        ))}
-      </div>
-    </div>
-  </div>
-);
+const HandbookView = () => {
+  const [selectedId, setSelectedId] = useState(HANDBOOK_CONTENT[0]?.id);
+  const activeSection = HANDBOOK_CONTENT.find(s => s.id === selectedId) || HANDBOOK_CONTENT[0];
 
-const ToolCard: React.FC<{ tool: DetectionTool }> = ({ tool }) => (
-  <div className="bg-dark-800 border border-dark-700 rounded-xl p-5 hover:bg-dark-700/50 transition-colors">
-    <div className="flex items-center space-x-3 mb-3">
-      <Terminal className="text-blue-400" size={20} />
-      <h3 className="text-lg font-bold text-white">{tool.name}</h3>
-    </div>
-    <span className="inline-block px-2 py-0.5 rounded text-xs bg-blue-900/30 text-blue-200 mb-3 border border-blue-900/50">
-      {tool.purpose}
-    </span>
-    <p className="text-slate-400 text-sm">{tool.description}</p>
-  </div>
-);
+  if (!activeSection) return <div className="p-8 text-center text-slate-500">No handbook content available.</div>;
 
-const StealthLabView = () => {
   return (
-    <div className="space-y-12 animate-fadeIn max-w-6xl mx-auto pb-24">
-      <SectionTitle 
-        title="Stealth Injection Lab" 
-        subtitle="Moving beyond registry keys. Advanced fileless and memory-resident injection vectors for Red Lotus evasion." 
-      />
-
-      {/* Hero: The 'No Trace' Philosophy */}
-      <div className="bg-dark-800 border border-dark-700 rounded-3xl p-8 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-          <Binary size={240} />
-        </div>
-        <div className="relative z-10 max-w-3xl">
-          <div className="flex items-center space-x-4 mb-6">
-            <Fingerprint className="text-lotus-500" size={40} />
-            <h3 className="text-3xl font-extrabold text-white tracking-tight uppercase">Registry-Free Stealth</h3>
-          </div>
-          <p className="text-slate-300 text-lg leading-relaxed mb-6">
-            Red Lotus analysts check Registry Keys (IFEO, BAM) and File System trails (Prefetch, USN Journal) because they are the easiest to verify. 
-            The next level of evasion relies on <strong>In-Memory Volatile Injection</strong>—where your payload only exists in the RAM of a legitimate system process.
-          </p>
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fadeIn">
+      <div className="lg:col-span-1 space-y-2">
+        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 px-2">Table of Contents</h3>
+        <div className="space-y-1">
+          {HANDBOOK_CONTENT.map(section => (
+            <button
+              key={section.id}
+              onClick={() => setSelectedId(section.id)}
+              className={`w-full text-left px-4 py-3 rounded-lg text-sm transition-all ${
+                selectedId === section.id 
+                  ? 'bg-lotus-900/30 text-lotus-300 border border-lotus-800' 
+                  : 'text-slate-400 hover:bg-dark-800'
+              }`}
+            >
+              <div className="font-bold">{section.title}</div>
+              <div className="text-xs opacity-60 uppercase">{section.chapter}</div>
+            </button>
+          ))}
         </div>
       </div>
-
-      {/* Advanced Options Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        
-        {/* Reflective DLL Injection */}
-        <div className="bg-dark-800 border border-dark-700 rounded-2xl p-6 hover:border-blue-500/50 transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <Waves className="text-blue-400" size={24} />
-              <h4 className="text-xl font-bold text-white uppercase">Reflective DLL</h4>
-            </div>
-            <span className="text-[10px] bg-blue-900/20 text-blue-400 px-2 py-0.5 rounded-full font-bold">CORE STEALTH</span>
-          </div>
-          <p className="text-slate-400 text-sm leading-relaxed mb-6">
-            The DLL contains its own minimal PE loader. The injector simply allocates space and jumps to the DLL's entry point. <strong>Bypasses:</strong> `LdrpLoadDll` hooks and standard "Module" listings in most tools.
-          </p>
-          <div className="bg-dark-900/50 p-4 rounded-xl border border-dark-700">
-            <div className="text-[10px] text-slate-500 mb-2 font-mono uppercase">Memory Signature</div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-xs text-slate-300 font-mono">Status: Invisible to Standard Module Parsers</span>
-            </div>
-          </div>
+      <div className="lg:col-span-3 bg-dark-800 border border-dark-700 rounded-2xl p-8 shadow-2xl">
+        <div className="flex items-center space-x-2 text-lotus-500 mb-2">
+          <Book size={16} />
+          <span className="text-xs font-bold uppercase tracking-widest">{activeSection.chapter}</span>
         </div>
-
-        {/* Module Overloading */}
-        <div className="bg-dark-800 border border-dark-700 rounded-2xl p-6 hover:border-green-500/50 transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <Layers className="text-green-400" size={24} />
-              <h4 className="text-xl font-bold text-white uppercase">Module Overloading</h4>
-            </div>
-            <span className="text-[10px] bg-green-900/20 text-green-400 px-2 py-0.5 rounded-full font-bold">GOD TIER</span>
-          </div>
-          <p className="text-slate-400 text-sm leading-relaxed mb-6">
-            Find a large, rarely used system DLL in `javaw.exe` (e.g., `bcrypt.dll` or `d3d11.dll`). Overwrite its memory sections with your cheat. <strong>Analyst View:</strong> They see a legitimate, signed Microsoft DLL.
-          </p>
-          <div className="bg-dark-900/50 p-4 rounded-xl border border-dark-700">
-            <div className="text-[10px] text-slate-500 mb-2 font-mono uppercase">Forensic Trace</div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-              <span className="text-xs text-slate-300 font-mono">Bypasses: Private Memory Scans</span>
-            </div>
-          </div>
+        <h2 className="text-4xl font-bold text-white mb-6 tracking-tight">{activeSection.title}</h2>
+        <div className="space-y-6 text-slate-300 leading-relaxed text-lg font-light">
+          {activeSection.content.map((para, i) => (
+            <p key={i}>{para}</p>
+          ))}
         </div>
-
-        {/* Thread Hijacking */}
-        <div className="bg-dark-800 border border-dark-700 rounded-2xl p-6 hover:border-purple-500/50 transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <Ghost className="text-purple-400" size={24} />
-              <h4 className="text-xl font-bold text-white uppercase">Thread Hijacking</h4>
-            </div>
-            <span className="text-[10px] bg-purple-900/20 text-purple-400 px-2 py-0.5 rounded-full font-bold">NO NEW THREADS</span>
-          </div>
-          <p className="text-slate-400 text-sm leading-relaxed mb-6">
-            Suspend a legitimate thread in the target process. Use `SetThreadContext` to change the `RIP` (Instruction Pointer) to point to your shellcode, then resume. No new threads are created for Red Lotus to find.
-          </p>
-          <div className="bg-dark-900/50 p-4 rounded-xl border border-dark-700">
-            <div className="text-[10px] text-slate-500 mb-2 font-mono uppercase">Stack Trace</div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <span className="text-xs text-slate-300 font-mono">Bypasses: Thread List Enumeration</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Process Hollowing (PE) */}
-        <div className="bg-dark-800 border border-dark-700 rounded-2xl p-6 hover:border-orange-500/50 transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <Trash2 className="text-orange-400" size={24} />
-              <h4 className="text-xl font-bold text-white uppercase">Process Hollowing</h4>
-            </div>
-            <span className="text-[10px] bg-orange-900/20 text-orange-400 px-2 py-0.5 rounded-full font-bold">LEGACY BUT EFFECTIVE</span>
-          </div>
-          <p className="text-slate-400 text-sm leading-relaxed mb-6">
-            Launch a legit system process (e.g., `calc.exe`) in a suspended state. Unmap its memory and replace it with your loader's PE image. Resume. The OS and analysts think it's Calculator.
-          </p>
-          <div className="bg-dark-900/50 p-4 rounded-xl border border-dark-700">
-            <div className="text-[10px] text-slate-500 mb-2 font-mono uppercase">Evasion Level</div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-              <span className="text-xs text-slate-300 font-mono">Detected by: Advanced Entropy Scanners</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Manual Mapping Deep Dive */}
-      <div className="bg-gradient-to-br from-dark-800 to-lotus-950/20 border border-dark-700 rounded-3xl p-8 shadow-2xl">
-        <div className="flex items-center space-x-4 mb-8">
-          <Cpu className="text-lotus-500" size={32} />
-          <h3 className="text-2xl font-bold text-white uppercase tracking-tight">The Manual Map Blueprint</h3>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          <div className="space-y-6">
-            <p className="text-slate-300 text-sm leading-relaxed">
-              Manual mapping is the gold standard because it avoids the Windows Loader entirely. You perform the work of `LoadLibrary` manually:
-            </p>
-            <ul className="space-y-4">
-              {[
-                "1. Map PE headers and sections into target memory.",
-                "2. Perform Base Relocations (fixing absolute addresses).",
-                "3. Resolve Imports by parsing the IAT manually.",
-                "4. Execute TLS Callbacks and then the DllMain entry point."
-              ].map((text, i) => (
-                <li key={i} className="flex items-start space-x-3 text-xs text-slate-400">
-                  <div className="w-1.5 h-1.5 rounded-full bg-lotus-500 mt-1 shrink-0"></div>
-                  <span>{text}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          
-          <div className="bg-dark-950/80 p-6 rounded-2xl border border-dark-700 font-mono text-[10px]">
-            <div className="text-lotus-400 mb-2">// Manual Mapping Pseudo-Code</div>
-            <div className="text-slate-500">void MapDLL(const char* dllPath, HANDLE targetProcess) &#123;</div>
-            <div className="pl-4">
-              <div className="text-blue-300">LPVOID remoteMem = VirtualAllocEx(targetProcess, ...);</div>
-              <div className="text-slate-400">WriteProcessMemory(targetProcess, remoteMem, headers, ...);</div>
-              <div className="text-slate-400">for (auto& section : sections) &#123;</div>
-              <div className="pl-4 text-slate-400">WriteProcessMemory(targetProcess, remoteMem + offset, data, ...);</div>
-              <div className="text-slate-400">&#125;</div>
-              <div className="text-green-300">// Fix Relocations & Imports via shellcode stub...</div>
-              <div className="text-blue-300">CreateRemoteThread(targetProcess, ..., stub, ...);</div>
-            </div>
-            <div className="text-slate-500">&#125;</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Anti-Forensic Advice */}
-      <div className="bg-lotus-900/10 border border-lotus-500/30 p-8 rounded-3xl">
-        <div className="flex items-center space-x-3 mb-6">
-          <ShieldCheck className="text-lotus-400" size={24} />
-          <h3 className="text-xl font-bold text-white uppercase">Injection Hardening</h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-2">
-            <h5 className="text-white font-bold text-xs uppercase">Memory Zeroing</h5>
-            <p className="text-[11px] text-slate-500">Once DllMain returns, zero out your PE headers in the target memory. Analysts use `System Informer` to find 'MZ' signatures—removing them breaks their scanning.</p>
-          </div>
-          <div className="space-y-2">
-            <h5 className="text-white font-bold text-xs uppercase">Junk Code Insertion</h5>
-            <p className="text-[11px] text-slate-500">Add 20% random junk logic to your shellcode. This changes the entropy and signature of your injector, making generic regex scans from Red Lotus analysts fail.</p>
-          </div>
-          <div className="space-y-2">
-            <h5 className="text-white font-bold text-xs uppercase">Thread Name Spoofing</h5>
-            <p className="text-[11px] text-slate-500">If you create a thread, rename it immediately to match a background worker like `TimerThread` or `Garbage Collector` to blend into the JVM process.</p>
-          </div>
+        <div className="mt-12 pt-6 border-t border-dark-700 flex flex-wrap gap-2">
+          {activeSection.tags.map(tag => (
+            <span key={tag} className="px-3 py-1 bg-dark-900 text-slate-400 text-xs rounded-full border border-dark-600">
+              #{tag}
+            </span>
+          ))}
         </div>
       </div>
     </div>
@@ -267,350 +99,477 @@ const StealthLabView = () => {
 };
 
 const SimulationView = () => {
-  const [selectedScenarioId, setSelectedScenarioId] = useState<string | null>(null);
-  const selectedScenario = SCENARIOS.find(s => s.id === selectedScenarioId);
+  const [selectedId, setSelectedId] = useState<string | null>(SCENARIOS[0]?.id || null);
+  const scenario = SCENARIOS.find(s => s.id === selectedId);
 
   return (
-    <div className="space-y-6">
-      <SectionTitle 
-        title="Forensic Simulator" 
-        subtitle="Simulate user actions to see what forensic trails Red Lotus detects." 
-      />
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
+      <div className="space-y-3">
+        {SCENARIOS.map(s => (
+          <button
+            key={s.id}
+            onClick={() => setSelectedId(s.id)}
+            className={`w-full text-left p-4 rounded-xl border transition-all ${
+              selectedId === s.id ? 'bg-lotus-900/20 border-lotus-500 text-white' : 'bg-dark-800 border-dark-700 text-slate-400 hover:border-dark-600'
+            }`}
+          >
+            <div className="font-bold mb-1">{s.action}</div>
+            <div className="text-xs opacity-60 uppercase">{s.riskLevel} Risk Level</div>
+          </button>
+        ))}
+      </div>
+      <div className="lg:col-span-2">
+        {scenario ? (
+          <div className="bg-dark-800 border border-dark-700 rounded-2xl p-8 h-full shadow-xl">
+            <h3 className="text-2xl font-bold text-white mb-4">Forensic Analysis Report</h3>
+            <p className="text-slate-400 mb-8 leading-relaxed">{scenario.description}</p>
+            <div className="space-y-4">
+              <h4 className="text-xs font-bold uppercase text-lotus-500 tracking-widest flex items-center">
+                <ShieldAlert size={14} className="mr-2" /> Forensic Triggers
+              </h4>
+              <div className="grid grid-cols-1 gap-3">
+                {scenario.triggers.map((t, i) => (
+                  <div key={i} className="flex items-center space-x-3 bg-dark-900/50 p-4 rounded-xl border border-dark-700 group hover:border-lotus-900 transition-all">
+                    <AlertTriangle className="text-lotus-500 group-hover:scale-110 transition-transform" size={18} />
+                    <span className="text-slate-200 font-mono text-sm">{t}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-dark-700 rounded-2xl text-slate-600 p-12">
+            <Activity size={48} className="mb-4 opacity-20" />
+            <p>Select a scenario to analyze traces</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-3">
-          <h3 className="text-lg font-semibold text-lotus-200 mb-4">Select an Action</h3>
-          {SCENARIOS.map(scenario => (
+const BypassingView = () => {
+  const [selectedComp, setSelectedComp] = useState<ModComponent | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string>('All');
+  
+  const categories = ['All', 'Execution', 'Anti-Forensics', 'Storage'];
+
+  const filteredComponents = useMemo(() => {
+    if (categoryFilter === 'All') return MOD_COMPONENTS;
+    return MOD_COMPONENTS.filter(c => c.category === categoryFilter);
+  }, [categoryFilter]);
+
+  return (
+    <div className="space-y-8 animate-fadeIn pb-32">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <SectionTitle title="Evasion Lab" subtitle="Deep-dive into C++ JNI bypassing & anti-forensics." />
+        <div className="flex items-center space-x-2 bg-dark-800 p-1.5 rounded-xl border border-dark-700 h-fit">
+          {categories.map(cat => (
             <button
-              key={scenario.id}
-              onClick={() => setSelectedScenarioId(scenario.id)}
-              className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${
-                selectedScenarioId === scenario.id
-                  ? 'bg-lotus-900/20 border-lotus-500 text-white'
-                  : 'bg-dark-800 border-dark-700 text-slate-400 hover:bg-dark-700'
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all uppercase tracking-tight ${
+                categoryFilter === cat ? 'bg-lotus-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              <div className="flex justify-between items-center mb-1">
-                <span className="font-semibold">{scenario.action}</span>
-                <ChevronRight size={16} className={`transform transition-transform ${selectedScenarioId === scenario.id ? 'rotate-90' : ''}`} />
-              </div>
-              <div className="text-xs opacity-70 truncate">{scenario.description}</div>
+              {cat}
             </button>
           ))}
         </div>
-
-        <div className="lg:col-span-2">
-          {selectedScenario ? (
-            <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 h-full animate-fadeIn">
-              <div className="flex items-center justify-between mb-6 border-b border-dark-600 pb-4">
-                <h3 className="text-xl font-bold text-white">Analysis Report</h3>
-                <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                  selectedScenario.riskLevel === 'Critical' ? 'bg-red-900/50 text-red-400 border border-red-800' :
-                  selectedScenario.riskLevel === 'High' ? 'bg-orange-900/50 text-orange-400 border border-orange-800' :
-                  'bg-yellow-900/50 text-yellow-400 border border-yellow-800'
-                }`}>
-                  {selectedScenario.riskLevel} Detection Risk
-                </span>
-              </div>
-
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-sm uppercase tracking-wider text-slate-500 font-bold mb-3">Detected Traces</h4>
-                  <div className="space-y-3">
-                    {selectedScenario.triggers.map((trigger, idx) => (
-                      <div key={idx} className="flex items-start space-x-3 bg-dark-900/50 p-3 rounded-lg">
-                        <AlertTriangle className="text-lotus-500 shrink-0 mt-0.5" size={16} />
-                        <span className="text-slate-200 text-sm font-mono">{trigger}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-slate-500 bg-dark-800/50 border border-dark-700 border-dashed rounded-xl p-12">
-              <Activity size={48} className="mb-4 opacity-50" />
-              <p className="text-lg">Select a scenario to begin simulation</p>
-            </div>
-          )}
-        </div>
       </div>
-    </div>
-  );
-};
 
-const EvasionArchitect = () => {
-  const [selectedComponents, setSelectedComponents] = useState<string[]>([]);
-
-  const toggleComponent = (id: string) => {
-    setSelectedComponents(prev => 
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
-    );
-  };
-
-  const activeComponents = MOD_COMPONENTS.filter(c => selectedComponents.includes(c.id));
-  const totalRisk = activeComponents.reduce((acc, curr) => acc + curr.riskScore, 0);
-  const riskClass = activeComponents.length === 0 ? 'None' : totalRisk > 15 ? 'Critical' : totalRisk > 10 ? 'High' : totalRisk > 5 ? 'Medium' : 'Low';
-  const bypasses = Array.from(new Set(activeComponents.flatMap(c => c.bypasses)));
-
-  return (
-    <div className="space-y-6">
-      <SectionTitle 
-        title="Evasion Architect" 
-        subtitle="Build a conceptual mod architecture and see its forensic score." 
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-5 space-y-4">
-          <h3 className="text-lg font-semibold text-white mb-4">Architecture Components</h3>
-          <div className="space-y-3">
-            {MOD_COMPONENTS.map(comp => (
-              <div 
-                key={comp.id}
-                onClick={() => toggleComponent(comp.id)}
-                className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 ${
-                  selectedComponents.includes(comp.id)
-                    ? 'bg-lotus-900/20 border-lotus-500 shadow-[0_0_15px_rgba(244,63,94,0.2)]'
-                    : 'bg-dark-800 border-dark-700 hover:border-dark-600'
-                }`}
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <span className={`text-sm font-bold px-2 py-0.5 rounded ${
-                    comp.category === 'Execution' ? 'bg-blue-900/50 text-blue-300' :
-                    comp.category === 'Storage' ? 'bg-purple-900/50 text-purple-300' :
-                    'bg-orange-900/50 text-orange-300'
-                  }`}>
-                    {comp.category}
-                  </span>
-                </div>
-                <h4 className="text-white font-bold mb-1">{comp.name}</h4>
-                <p className="text-xs text-slate-400">{comp.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="lg:col-span-7">
-          <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 h-full sticky top-6">
-            <div className="flex items-center justify-between mb-6 pb-6 border-b border-dark-700">
-              <div>
-                <h3 className="text-xl font-bold text-white">Detection Profile</h3>
-              </div>
-              <div className="text-right">
-                <span className={`block text-2xl font-bold ${
-                  riskClass === 'Critical' ? 'text-red-500' : 
-                  riskClass === 'High' ? 'text-orange-500' : 
-                  riskClass === 'Medium' ? 'text-yellow-500' : 
-                  riskClass === 'Low' ? 'text-green-500' : 'text-slate-500'
-                }`}>
-                  {riskClass} Risk
-                </span>
-              </div>
-            </div>
-
-            {selectedComponents.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-slate-600">
-                <Layers size={48} className="mb-4 opacity-50" />
-                <p>Select components to build your architecture</p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-xs uppercase tracking-wider text-green-400 font-bold mb-3 flex items-center">
-                    <Shield size={14} className="mr-2" /> Bypassed Artifacts
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {bypasses.map((bypass, idx) => (
-                      <span key={idx} className="text-xs bg-green-900/20 text-green-300 border border-green-900/50 px-2 py-1 rounded">
-                        {bypass}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-dark-900 rounded-lg p-4 border border-dark-600">
-                  <h4 className="text-xs uppercase tracking-wider text-lotus-400 font-bold mb-2 flex items-center">
-                    <Zap size={14} className="mr-2" /> Red Lotus Insight
-                  </h4>
-                  <div className="space-y-3">
-                    {activeComponents.map(comp => (
-                      <div key={comp.id} className="text-xs text-slate-400 border-l-2 border-dark-600 pl-3">
-                        <span className="text-slate-200 font-bold">{comp.name}:</span> "{comp.redLotusReference}"
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const BypassIntelligence = () => {
-  return (
-    <div className="space-y-10 animate-fadeIn">
-      <SectionTitle 
-        title="Bypass Strategy" 
-        subtitle="Tier-1 strategies for evading Red Lotus ScreenShares." 
-      />
-
-      {/* The Injectable Blueprint */}
-      <div className="bg-gradient-to-br from-lotus-900/40 to-dark-800 border border-lotus-500/30 rounded-2xl p-8 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 opacity-10">
-          <Ghost size={120} className="text-lotus-500" />
-        </div>
-        
-        <div className="relative z-10">
-          <div className="flex items-center space-x-3 mb-6">
-            <Shield className="text-lotus-500" size={32} />
-            <h3 className="text-2xl font-bold text-white tracking-tight uppercase">The "Ghost DLL" Method</h3>
-          </div>
-
-          <p className="text-slate-300 text-lg mb-8 leading-relaxed max-w-3xl">
-            Injecting into system hosts like <strong>svchost.exe</strong> or <strong>explorer.exe</strong> is the ultimate evasion tier. 
-            Follow this technical sequence to survive a manual forensic audit.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-dark-900/60 p-5 rounded-xl border border-dark-700">
-              <div className="flex items-center space-x-2 mb-3">
-                <Terminal className="text-blue-400" size={18} />
-                <h4 className="text-white font-bold">1. Kill the Logger</h4>
-              </div>
-              <p className="text-slate-400 text-xs leading-relaxed">
-                Immediately suspend the <span className="text-blue-300 font-mono">sechost.dll</span> thread within <strong>SysMain</strong>. This halts all Prefetch generation. No .pf file will ever be created for your injector or target.
-              </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredComponents.map(c => (
+          <div 
+            key={c.id} 
+            onClick={() => setSelectedComp(c)}
+            className="group relative bg-dark-800 border border-dark-700 rounded-2xl p-6 cursor-pointer hover:border-lotus-500 hover:bg-dark-700/40 transition-all overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-opacity">
+              <Brackets size={40} />
             </div>
             
-            <div className="bg-dark-900/60 p-5 rounded-xl border border-dark-700">
-              <div className="flex items-center space-x-2 mb-3">
-                <Monitor className="text-purple-400" size={18} />
-                <h4 className="text-white font-bold">2. System Host Selection</h4>
+            <div className="flex justify-between items-start mb-4">
+               <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${
+                  c.category === 'Execution' ? 'bg-blue-900/20 text-blue-400 border-blue-900/30' : 
+                  c.category === 'Anti-Forensics' ? 'bg-purple-900/20 text-purple-400 border-purple-900/30' : 'bg-green-900/20 text-green-400 border-green-900/30'
+                }`}>
+                  {c.category}
+                </span>
+                <span className="text-[10px] font-mono text-slate-500">SCORE: {c.riskScore}</span>
+            </div>
+            
+            <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tighter">{c.name}</h3>
+            <p className="text-xs text-slate-400 leading-relaxed mb-4 line-clamp-2">{c.description}</p>
+            
+            <div className="flex items-center text-lotus-500 text-[10px] font-bold uppercase tracking-widest mt-auto">
+              VIEW TECHNICAL DATA <ArrowRight size={12} className="ml-1 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Detail Modal */}
+      {selectedComp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 backdrop-blur-md bg-black/60 animate-in fade-in duration-300">
+          <div className="bg-dark-900 border border-dark-700 w-full max-w-5xl max-h-[90vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl">
+            {/* Header */}
+            <div className="p-6 md:p-8 border-b border-dark-800 flex items-center justify-between bg-dark-800/30">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-lotus-600/10 rounded-2xl flex items-center justify-center border border-lotus-500/20">
+                  <TerminalSquare className="text-lotus-500" size={24} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-white uppercase tracking-tighter">{selectedComp.name}</h2>
+                  <p className="text-xs text-slate-500 font-mono">MODULE_ID: {selectedComp.id} | REF: {selectedComp.redLotusReference}</p>
+                </div>
               </div>
-              <p className="text-slate-400 text-xs leading-relaxed">
-                Target <strong>svchost.exe</strong> or a background driver process (e.g. <code className="bg-dark-800 px-1">LGHUB.exe</code>). Analysts focus 95% of their attention on <code className="bg-dark-800 px-1 font-mono">javaw.exe</code>.
-              </p>
+              <button 
+                onClick={() => setSelectedComp(null)}
+                className="p-2 hover:bg-dark-700 rounded-full transition-colors text-slate-400"
+              >
+                <X size={24} />
+              </button>
             </div>
 
-            <div className="bg-dark-900/60 p-5 rounded-xl border border-dark-700">
-              <div className="flex items-center space-x-2 mb-3">
-                <Layers className="text-green-400" size={18} />
-                <h4 className="text-white font-bold">3. Manual Map + Overload</h4>
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-xs font-black text-lotus-500 uppercase tracking-[0.2em] mb-3 flex items-center">
+                      <InfoIcon size={14} className="mr-2" /> Technical Briefing
+                    </h4>
+                    <p className="text-slate-300 leading-relaxed text-sm">
+                      {selectedComp.technicalDetail || "Detailed technical briefing under construction. Access Tome II for physical documentation."}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs font-black text-lotus-500 uppercase tracking-[0.2em] mb-3">Implementation Steps (C++)</h4>
+                    <div className="space-y-3">
+                      {selectedComp.implementationSteps?.map((step, i) => (
+                        <div key={i} className="flex items-start space-x-3 bg-dark-800/40 p-3 rounded-xl border border-dark-700/50">
+                          <div className="w-5 h-5 bg-dark-700 rounded flex items-center justify-center text-[10px] font-black text-white shrink-0 mt-0.5">
+                            {i + 1}
+                          </div>
+                          <span className="text-xs text-slate-400">{step}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  {selectedComp.codeSnippet && (
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-black text-lotus-500 uppercase tracking-[0.2em] flex items-center">
+                        <Code size={14} className="mr-2" /> Source Snippet (Native)
+                      </h4>
+                      <div className="bg-black/40 rounded-2xl border border-dark-700 p-6 font-mono text-[11px] leading-relaxed text-blue-300 overflow-x-auto">
+                        <pre>{selectedComp.codeSnippet}</pre>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-green-900/10 border border-green-900/20 rounded-2xl">
+                      <h5 className="text-[10px] font-black text-green-500 uppercase mb-2">Primary Bypasses</h5>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedComp.bypasses.map((b, i) => (
+                          <span key={i} className="px-2 py-0.5 bg-green-900/30 text-green-400 rounded text-[9px] font-bold">{b}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="p-4 bg-red-900/10 border border-red-900/20 rounded-2xl">
+                      <h5 className="text-[10px] font-black text-red-500 uppercase mb-2">Detection Triggers</h5>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedComp.triggers.map((t, i) => (
+                          <span key={i} className="px-2 py-0.5 bg-red-900/30 text-red-400 rounded text-[9px] font-bold">{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p className="text-slate-400 text-xs leading-relaxed">
-                Never use LoadLibrary. Use <strong>Manual Mapping</strong>. For max stealth, perform <strong>Module Overloading</strong>: find a legitimate DLL already in the host and overwrite its memory with your cheat.
-              </p>
             </div>
 
-            <div className="bg-dark-900/60 p-5 rounded-xl border border-dark-700">
-              <div className="flex items-center space-x-2 mb-3">
-                <Lock className="text-orange-400" size={18} />
-                <h4 className="text-white font-bold">4. Zero-Footprint Memory</h4>
-              </div>
-              <p className="text-slate-400 text-xs leading-relaxed">
-                Use <strong>Runtime XOR Encryption</strong> for strings. Decrypt into a temporary buffer, use it, then immediately <code>memset</code> that buffer to 0. Analysts regex scanning RAM will find nothing.
-              </p>
+            {/* Footer */}
+            <div className="p-6 border-t border-dark-800 bg-dark-800/30 flex justify-end">
+              <button 
+                onClick={() => setSelectedComp(null)}
+                className="px-6 py-2 bg-lotus-600 hover:bg-lotus-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+              >
+                Acknowledge Data
+              </button>
             </div>
           </div>
         </div>
+      )}
+    </div>
+  );
+};
+
+// --- Missing BypassIntel Component ---
+/**
+ * BypassIntel component provides an AI-powered technical analysis for advanced
+ * Minecraft client evasion and forensic trails using Gemini 3 Pro.
+ */
+const BypassIntel = () => {
+  const [query, setQuery] = useState('');
+  const [response, setResponse] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSearch = async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    setResponse('');
+    try {
+      // Initialize Gemini AI client for high-quality technical analysis
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const result = await ai.models.generateContent({
+        model: 'gemini-3-pro-preview',
+        contents: query,
+        config: {
+          systemInstruction: 'You are a Red Lotus Senior Intelligence Analyst specializing in advanced Minecraft client bypasses, C++ JNI development, and Windows forensic analysis. Your goal is to provide highly technical, precise, and professional intelligence reports based on user queries about evasion techniques, tool trails, or forensic countermeasures. Assume the user is a professional ScreenSharer or security researcher.',
+          temperature: 0.7,
+        },
+      });
+      setResponse(result.text || 'No intelligence gathered for this vector.');
+    } catch (error) {
+      setResponse('Connection failed. Error code: INTELLIGENCE_LINK_OFFLINE. Ensure your infrastructure permits API calls.');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn pb-20">
+      <SectionTitle 
+        title="Bypass Intelligence" 
+        subtitle="Neural-assisted technical briefing on modern evasion techniques and forensic countermeasures." 
+      />
+      
+      <div className="bg-dark-800 border border-dark-700 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none">
+          <BrainCircuit size={240} />
+        </div>
+        
+        <div className="relative mb-8">
+          <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+            <Search className="text-lotus-500" size={20} />
+          </div>
+          <input
+            type="text"
+            className="w-full bg-dark-900 border border-dark-700 rounded-2xl py-5 pl-14 pr-32 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-lotus-500/50 transition-all font-light"
+            placeholder="Search for a technique (e.g., 'Module Stomping Traces' or 'JVM Hooking')..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          <button
+            onClick={handleSearch}
+            disabled={loading}
+            className="absolute right-3 top-3 bottom-3 px-6 bg-lotus-600 hover:bg-lotus-500 disabled:opacity-50 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-lotus-900/40"
+          >
+            {loading ? 'ANALYZING...' : 'EXECUTE'}
+          </button>
+        </div>
+
+        {response && (
+          <div className="mt-8 space-y-4 animate-in slide-in-from-top-4 duration-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-lotus-500">
+                <BrainCircuit size={16} />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em]">Intelligence Briefing</span>
+              </div>
+              <div className="text-[10px] font-mono text-slate-600">ENCRYPTION: AES-256-GCM</div>
+            </div>
+            <div className="bg-dark-900/80 border border-dark-700 rounded-2xl p-8 text-slate-300 leading-relaxed font-light whitespace-pre-wrap text-sm border-l-4 border-l-lotus-500 shadow-inner">
+              {response}
+            </div>
+          </div>
+        )}
+
+        {!response && !loading && (
+          <div className="py-20 text-center space-y-6 opacity-30">
+            <div className="relative inline-block">
+              <Globe size={64} className="mx-auto text-slate-400 animate-pulse" />
+              <div className="absolute inset-0 bg-lotus-500 blur-3xl opacity-10"></div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-black uppercase tracking-[0.4em] text-slate-400">Waiting for operative input</p>
+              <p className="text-[10px] font-mono text-slate-600">UPLINK_STATUS: STANDBY</p>
+            </div>
+          </div>
+        )}
+        
+        {loading && (
+          <div className="py-20 text-center space-y-6">
+            <div className="flex justify-center space-x-2">
+              <div className="w-2 h-2 bg-lotus-500 rounded-full animate-bounce delay-75"></div>
+              <div className="w-2 h-2 bg-lotus-500 rounded-full animate-bounce delay-150"></div>
+              <div className="w-2 h-2 bg-lotus-500 rounded-full animate-bounce delay-300"></div>
+            </div>
+            <p className="text-xs font-black uppercase tracking-[0.4em] text-lotus-500 animate-pulse">Scanning Neural Network...</p>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-// --- Main App ---
+// --- Main Application ---
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'home' | 'artifacts' | 'tools' | 'simulation' | 'evasion' | 'intelligence' | 'stealth'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'handbook' | 'artifacts' | 'tools' | 'simulation' | 'evasion' | 'intelligence'>('home');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
         return (
-          <div className="space-y-8 max-w-4xl mx-auto">
-            <div className="text-center py-12">
-              <h1 className="text-5xl font-bold text-white mb-6 tracking-tight">
-                Red Lotus <span className="text-lotus-500">Analyst</span>
+          <div className="max-w-5xl mx-auto py-12 text-center space-y-12 animate-fadeIn">
+            <div className="space-y-6">
+              <div className="inline-block px-4 py-1.5 bg-lotus-900/30 text-lotus-400 rounded-full text-xs font-black tracking-[0.2em] border border-lotus-500/20 uppercase mb-4">
+                Red Lotus Unified Command
+              </div>
+              <h1 className="text-7xl font-black text-white tracking-tighter uppercase leading-[0.9]">
+                FORENSIC <span className="text-lotus-500">INTELLIGENCE</span>
               </h1>
-              <p className="text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto">
-                Interactive forensic intelligence based on the <span className="text-lotus-400">Red Lotus Screenshare Guide</span>.
+              <p className="text-xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
+                Comprehensive analyzer and simulator based on the Red Lotus Tome II methodology. Study the trails, understand the artifacts, and master the bypassing lab.
               </p>
             </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { tab: 'handbook', label: 'Handbook', desc: 'The full Red Lotus guide.', icon: BookOpen, color: 'border-lotus-500/20' },
+                { tab: 'evasion', label: 'Bypassing', desc: 'C++ JNI Module details.', icon: Lock, color: 'border-purple-500/20' },
+                { tab: 'simulation', label: 'Simulator', desc: 'Live forensic trace simulation.', icon: Activity, color: 'border-blue-500/20' },
+                { tab: 'artifacts', label: 'Artifacts', desc: 'Forensic data points.', icon: HardDrive, color: 'border-green-500/20' },
+              ].map(item => (
+                <div 
+                  key={item.tab} 
+                  onClick={() => setActiveTab(item.tab as any)} 
+                  className={`p-6 bg-dark-800 rounded-3xl border transition-all cursor-pointer group hover:bg-dark-700/40 hover:-translate-y-2 hover:shadow-2xl ${item.color}`}
+                >
+                  <item.icon className="mx-auto mb-4 text-slate-500 group-hover:text-white group-hover:scale-110 transition-all" size={36} />
+                  <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tighter">{item.label}</h3>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest">{item.desc}</p>
+                </div>
+              ))}
+            </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div onClick={() => setActiveTab('artifacts')} className="bg-dark-800 p-6 rounded-xl border border-dark-700 hover:border-lotus-500/50 cursor-pointer transition-all group">
-                <HardDrive className="text-lotus-500 mb-4 group-hover:scale-110 transition-transform" size={32} />
-                <h3 className="text-xl font-bold text-white mb-2">Artifacts DB</h3>
-                <p className="text-slate-400 text-sm">Forensic artifacts like Prefetch, BAM, and USN Journal.</p>
+            <div className="mt-16 p-8 bg-gradient-to-r from-lotus-950 to-dark-800 rounded-[2.5rem] border border-lotus-900/30 text-left relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Target size={200} />
               </div>
-              <div onClick={() => setActiveTab('tools')} className="bg-dark-800 p-6 rounded-xl border border-dark-700 hover:border-blue-500/50 cursor-pointer transition-all group">
-                <Terminal className="text-blue-500 mb-4 group-hover:scale-110 transition-transform" size={32} />
-                <h3 className="text-xl font-bold text-white mb-2">Tool Suite</h3>
-                <p className="text-slate-400 text-sm">Capabilities of System Informer and Everything.</p>
-              </div>
-              <div onClick={() => setActiveTab('simulation')} className="bg-dark-800 p-6 rounded-xl border border-dark-700 hover:border-green-500/50 cursor-pointer transition-all group">
-                <Activity className="text-green-500 mb-4 group-hover:scale-110 transition-transform" size={32} />
-                <h3 className="text-xl font-bold text-white mb-2">Simulator</h3>
-                <p className="text-slate-400 text-sm">Simulate user actions and see left traces.</p>
-              </div>
-              <div onClick={() => setActiveTab('stealth')} className="bg-dark-800 p-6 rounded-xl border border-dark-700 hover:border-yellow-500/50 cursor-pointer transition-all group">
-                <Fingerprint className="text-yellow-500 mb-4 group-hover:scale-110 transition-transform" size={32} />
-                <h3 className="text-xl font-bold text-white mb-2">Stealth Lab</h3>
-                <p className="text-slate-400 text-sm">Advanced fileless & memory injection deep-dives.</p>
-              </div>
-              <div onClick={() => setActiveTab('evasion')} className="bg-dark-800 p-6 rounded-xl border border-dark-700 hover:border-purple-500/50 cursor-pointer transition-all group">
-                <Lock className="text-purple-500 mb-4 group-hover:scale-110 transition-transform" size={32} />
-                <h3 className="text-xl font-bold text-white mb-2">Evasion Lab</h3>
-                <p className="text-slate-400 text-sm">Design mod architectures against Red Lotus logic.</p>
-              </div>
-              <div onClick={() => setActiveTab('intelligence')} className="bg-gradient-to-br from-dark-800 to-lotus-950 p-6 rounded-xl border border-lotus-900/50 hover:border-lotus-500 cursor-pointer transition-all group md:col-span-2 lg:col-span-1">
-                <BrainCircuit className="text-lotus-400 mb-4 group-hover:scale-110 transition-transform" size={32} />
-                <h3 className="text-xl font-bold text-white mb-2">Bypass Intel</h3>
-                <p className="text-slate-400 text-sm">The gold-standard deep-dives.</p>
+              <div className="relative z-10 max-w-2xl">
+                <h3 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter">Bypassing Methodology</h3>
+                <p className="text-slate-300 mb-6 leading-relaxed">Access the Evasion Lab to explore advanced C++ JNI techniques used in modern stealth clients. From Manual Mapping to Native Hooking, Tome II covers every detection vector used by professional ScreenSharers.</p>
+                <button 
+                  onClick={() => setActiveTab('evasion')}
+                  className="flex items-center space-x-2 bg-lotus-600 hover:bg-lotus-500 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-lotus-950/40"
+                >
+                  <span>Launch Lab</span> <ChevronRight size={16} />
+                </button>
               </div>
             </div>
           </div>
         );
-      case 'artifacts': return (<div><SectionTitle title="Forensic Artifacts" /><div className="grid grid-cols-1 md:grid-cols-2 gap-6">{ARTIFACTS.map(a => <ArtifactCard key={a.id} artifact={a} />)}</div></div>);
-      case 'tools': return (<div><SectionTitle title="Detection Tools" /><div className="grid grid-cols-1 md:grid-cols-3 gap-6">{TOOLS.map(t => <ToolCard key={t.id} tool={t} />)}</div></div>);
+      case 'handbook': return <HandbookView />;
+      case 'artifacts': return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
+          {ARTIFACTS.map(a => (
+            <div key={a.id} className="bg-dark-800 border border-dark-700 rounded-2xl p-6 hover:border-lotus-500 hover:bg-dark-700/30 transition-all group shadow-lg">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{a.category}</span>
+              <h3 className="text-2xl font-black text-white mb-2 mt-1 uppercase tracking-tighter">{a.name}</h3>
+              <p className="text-sm text-slate-400 mb-6 leading-relaxed">{a.description}</p>
+              <div className="bg-dark-900 rounded-xl p-4 border-l-4 border-lotus-600 group-hover:border-lotus-500 transition-colors">
+                <span className="text-[10px] font-bold uppercase text-lotus-400 block mb-1">Red Lotus Note</span>
+                <p className="text-xs italic text-slate-300">"{a.redLotusNotes}"</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+      case 'tools': return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
+          {TOOLS.map(t => (
+            <div key={t.id} className="bg-dark-800 border border-dark-700 rounded-2xl p-6 hover:border-blue-500 transition-all group">
+              <div className="w-12 h-12 bg-dark-900 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Terminal className="text-blue-400" size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-1 uppercase tracking-tight">{t.name}</h3>
+              <div className="text-xs text-blue-300 font-bold mb-3 uppercase tracking-tighter">{t.purpose}</div>
+              <p className="text-sm text-slate-400 leading-relaxed">{t.description}</p>
+            </div>
+          ))}
+        </div>
+      );
       case 'simulation': return <SimulationView />;
-      case 'evasion': return <EvasionArchitect />;
-      case 'intelligence': return <BypassIntelligence />;
-      case 'stealth': return <StealthLabView />;
+      case 'evasion': return <BypassingView />;
+      case 'intelligence': return <BypassIntel />;
+      default: return <div className="text-center p-20 text-slate-500">Coming soon...</div>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-dark-900 text-slate-200 flex font-sans">
-      <button className="fixed top-4 right-4 z-50 md:hidden p-2 bg-dark-800 rounded-lg border border-dark-700" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
+    <div className="min-h-screen bg-dark-900 text-slate-200 flex font-sans selection:bg-lotus-500/30 overflow-x-hidden">
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-dark-900 border-b border-dark-800 flex items-center justify-between px-6 z-50">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-lotus-600 rounded-lg flex items-center justify-center shadow-lg">
+             <div className="w-4 h-4 bg-white rounded-sm" />
+          </div>
+          <span className="text-lg font-black tracking-tighter text-white">REDLOTUS</span>
+        </div>
+        <button 
+          className="p-2 bg-dark-800 rounded-lg border border-dark-700 text-slate-200" 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
 
-      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-dark-900 border-r border-dark-700 transform transition-transform duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-6 border-b border-dark-800">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-lotus-600 rounded-lg flex items-center justify-center transform rotate-45">
-              <div className="w-4 h-4 bg-white rounded-sm transform -rotate-45" />
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-dark-900 border-r border-dark-700 transform transition-transform duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full shadow-2xl shadow-black/50'}`}>
+        <div className="p-8 border-b border-dark-800 hidden md:block">
+          <div className="flex items-center space-x-3 group cursor-pointer" onClick={() => setActiveTab('home')}>
+            <div className="w-10 h-10 bg-lotus-600 rounded-2xl flex items-center justify-center transform rotate-12 shadow-lg shadow-lotus-900/40 group-hover:rotate-0 transition-transform duration-500">
+              <div className="w-5 h-5 bg-white rounded-md transform -rotate-12 group-hover:rotate-0 transition-transform duration-500" />
             </div>
-            <span className="text-xl font-bold tracking-wide text-white">RED LOTUS</span>
+            <span className="text-xl font-black tracking-tighter text-white">REDLOTUS</span>
           </div>
         </div>
-        <nav className="p-4 space-y-2">
+        
+        <nav className="p-4 space-y-1 mt-16 md:mt-0">
+          <div className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4 ml-4">Main Menu</div>
           <SidebarItem icon={BookOpen} label="Overview" active={activeTab === 'home'} onClick={() => { setActiveTab('home'); setIsMobileMenuOpen(false); }} />
+          <SidebarItem icon={Book} label="Handbook" active={activeTab === 'handbook'} onClick={() => { setActiveTab('handbook'); setIsMobileMenuOpen(false); }} />
           <SidebarItem icon={HardDrive} label="Artifacts" active={activeTab === 'artifacts'} onClick={() => { setActiveTab('artifacts'); setIsMobileMenuOpen(false); }} />
+          
+          <div className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4 ml-4 mt-8">Operations</div>
+          <SidebarItem icon={Lock} label="Bypassing" active={activeTab === 'evasion'} onClick={() => { setActiveTab('evasion'); setIsMobileMenuOpen(false); }} />
+          <SidebarItem icon={Activity} label="Simulator" active={activeTab === 'simulation'} onClick={() => { setActiveTab('simulation'); setIsMobileMenuOpen(false); }} />
           <SidebarItem icon={Search} label="Tools" active={activeTab === 'tools'} onClick={() => { setActiveTab('tools'); setIsMobileMenuOpen(false); }} />
-          <SidebarItem icon={Cpu} label="Simulator" active={activeTab === 'simulation'} onClick={() => { setActiveTab('simulation'); setIsMobileMenuOpen(false); }} />
-          <SidebarItem icon={Fingerprint} label="Stealth Lab" active={activeTab === 'stealth'} onClick={() => { setActiveTab('stealth'); setIsMobileMenuOpen(false); }} />
-          <SidebarItem icon={Lock} label="Evasion Lab" active={activeTab === 'evasion'} onClick={() => { setActiveTab('evasion'); setIsMobileMenuOpen(false); }} />
           <SidebarItem icon={BrainCircuit} label="Bypass Intel" active={activeTab === 'intelligence'} onClick={() => { setActiveTab('intelligence'); setIsMobileMenuOpen(false); }} />
         </nav>
+        
+        <div className="absolute bottom-0 left-0 right-0 p-6">
+          <div className="bg-dark-800/50 rounded-2xl p-4 border border-dark-700/50 backdrop-blur-sm">
+            <div className="flex items-center space-x-2 text-[10px] font-black text-lotus-500 mb-1">
+              <Shield size={10} /> <span>UNIFIED SECURITY</span>
+            </div>
+            <div className="text-[9px] text-slate-600 uppercase tracking-widest font-mono">CORE_VERSION: 2.0.5B</div>
+          </div>
+        </div>
       </aside>
 
-      <main className="flex-1 md:ml-64 min-h-screen">
+      {/* Main Content */}
+      <main className="flex-1 md:ml-64 min-h-screen pt-16 md:pt-0">
         <div className="p-6 md:p-12 max-w-7xl mx-auto">
           {renderContent()}
         </div>

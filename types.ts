@@ -36,8 +36,19 @@ export interface ModComponent {
   name: string;
   category: 'Execution' | 'Storage' | 'Anti-Forensics';
   description: string;
-  bypasses: string[]; // List of artifacts this helps avoid
-  triggers: string[]; // List of artifacts this definitely triggers
-  riskScore: number; // 1-10, lower is stealthier
-  redLotusReference: string; // Quote or reference from the guide
+  bypasses: string[];
+  triggers: string[];
+  riskScore: number;
+  redLotusReference: string;
+  technicalDetail: string;
+  implementationSteps: string[];
+  codeSnippet?: string;
+}
+
+export interface HandbookSection {
+  id: string;
+  title: string;
+  chapter: string;
+  content: string[];
+  tags: string[];
 }
