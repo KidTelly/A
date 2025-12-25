@@ -1,0 +1,5 @@
+{
+  "name": "Red Lotus Analyst",
+  "description": "A comprehensive interactive guide and simulation tool based on the Red Lotus Screenshare methodologies. Designed to help developers understand detection vectors, artifacts, and forensic trails.",
+  "requestFramePermissions": []
+}
